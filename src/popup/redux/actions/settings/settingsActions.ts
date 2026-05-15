@@ -3,7 +3,6 @@ import {
   TOGGLE_DIV_FILTERING,
   SET_FILTER_EFFECT,
   SET_TRAINED_MODEL,
-  SET_FILTER_STRICTNESS,
   SET_WEBSITE_LIST
 } from './settingsTypes'
 
@@ -18,11 +17,6 @@ export const setFilterEffect = (filterEffect: 'hide' | 'blur' | 'grayscale') => 
 export const setTrainedModel = (trainedModel: 'MobileNet_v2' | 'InceptionV3') => ({
   type: SET_TRAINED_MODEL,
   payload: { trainedModel }
-} as const)
-
-export const setFilterStrictness = (filterStrictness: number) => ({
-  type: SET_FILTER_STRICTNESS,
-  payload: { filterStrictness }
 } as const)
 
 export const setWebsiteList = (websites: string[]) => ({

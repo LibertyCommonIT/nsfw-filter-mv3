@@ -18,7 +18,7 @@ enableProdMode()
 // In-memory store — chrome.storage is not available in offscreen documents.
 // Settings are pushed here from the service worker via messages.
 const state: RootState = {
-  settings: { logging: false, filterStrictness: 85, filterEffect: 'blur', trainedModel: 'MobileNet_v2', websites: [] },
+  settings: { logging: false, filterStrictness: 100, filterEffect: 'blur', trainedModel: 'MobileNet_v2', websites: [] },
   statistics: { totalBlocked: 0 },
   appearance: { darkTheme: true }
 }
@@ -65,6 +65,7 @@ chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
   if (message.type === 'OFFSCREEN_INIT') {
     const settings = message.settings as SettingsState
     Object.assign(state.settings, settings)
+    state.settings.filterStrictness = 100
     state.statistics.totalBlocked = message.totalBlocked as number ?? 0
     if (settings.logging) logger.enable()
   }
@@ -83,8 +84,9 @@ chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
   if (message.type === 'OFFSCREEN_CLEAR_CACHE') {
     const settings = message.settings as SettingsState
     Object.assign(state.settings, settings)
+    state.settings.filterStrictness = 100
     settings.logging ? logger.enable() : logger.disable()
-    model?.setSettings({ filterStrictness: settings.filterStrictness })
+    model?.setSettings({ filterStrictness: 100 })
     queue?.clearCache()
   }
 })

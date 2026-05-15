@@ -1,8 +1,7 @@
-import { Input, Select, Slider } from 'antd'
+import { Input, Select } from 'antd'
 import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
-import { setFilterStrictness } from '../../redux/actions/settings'
 import {
   setTrainedModel,
   setFilterEffect,
@@ -18,7 +17,6 @@ const { Option } = Select
 export const Production: React.FC = () => {
   const dispatch = useDispatch()
   const {
-    filterStrictness,
     trainedModel,
     filterEffect,
     websites
@@ -30,16 +28,6 @@ export const Production: React.FC = () => {
       <Stats>
         <span>Total blocked: {totalBlocked}</span>
       </Stats>
-      <div>Filter strictness: {filterStrictness}%</div>
-      <Slider
-        min={1}
-        max={100}
-        onChange={(value: number) => dispatch(setFilterStrictness(value))}
-        value={filterStrictness}
-        tooltip={{
-          formatter: null
-        }}
-      />
       <DropdownRow>
         <span>Filter effect</span>
         <Select

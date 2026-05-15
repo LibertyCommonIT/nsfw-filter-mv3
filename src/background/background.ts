@@ -11,8 +11,10 @@ const pendingRequests = new Map<string, (response: object) => void>()
 async function readSettings (): Promise<{ settings: SettingsState, statistics: StatisticsState }> {
   const stored = await chrome.storage.local.get(STORAGE_KEY)
   const state = (stored[STORAGE_KEY] ?? {}) as Partial<{ settings: SettingsState, statistics: StatisticsState }>
+  const settings = state.settings ?? { logging: false, filterEffect: 'blur', trainedModel: 'MobileNet_v2' as const, websites: [] }
+
   return {
-    settings: state.settings ?? { logging: false, filterStrictness: 85, filterEffect: 'blur', trainedModel: 'MobileNet_v2' as const, websites: [] },
+    settings: { ...settings, filterStrictness: 100 },
     statistics: state.statistics ?? { totalBlocked: 0 }
   }
 }
