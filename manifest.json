@@ -1,9 +1,0 @@
-{
-  "manifest_version": 3,
-  "name": "Liberty's NSFW Filter",
-  "version": "1.0",
-  "description": "A filter for skin.",
-  "action": {
-    "default_popup": "src/popup/popup.html"
-  }
-}
