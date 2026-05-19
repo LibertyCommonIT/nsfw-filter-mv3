@@ -47,7 +47,7 @@ export class DOMWatcher implements IDOMWatcher {
 
   private checkAttributeMutation (mutation: MutationRecord): void {
     if ((mutation.target as HTMLImageElement).nodeName === 'IMG') {
-      const isSrcAttribute = mutation.attributeName === 'src'
+      const isSrcAttribute = mutation.attributeName === 'src' || mutation.attributeName === 'srcset'
       const isStyleAttribute = mutation.attributeName === 'style'
 
       if (isStyleAttribute) {
@@ -65,7 +65,7 @@ export class DOMWatcher implements IDOMWatcher {
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['src', 'style']
+      attributeFilter: ['src', 'style', 'srcset']
     }
   }
 }
