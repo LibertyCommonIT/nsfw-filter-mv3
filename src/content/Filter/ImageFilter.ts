@@ -8,8 +8,9 @@ type imageFilterSettingsType = {
 
 export type IImageFilter = {
   analyzeImage: (image: HTMLImageElement, srcAttribute: boolean) => void
+  analyzeElement: (element: HTMLElement, srcAttribute: boolean) => void
   setSettings: (settings: imageFilterSettingsType) => void
-  checkStyleMutation: (image: HTMLImageElement) => void
+  checkStyleMutation: (element: HTMLElement) => void
 }
 
 export class ImageFilter extends Filter implements IImageFilter {
@@ -28,95 +29,130 @@ export class ImageFilter extends Filter implements IImageFilter {
   }
 
   public analyzeImage (image: HTMLImageElement, srcAttribute: boolean = false): void {
+    const url = this.getImageUrl(image)
     const imageIsNotAnalyzed = srcAttribute || image.dataset.nsfwFilterStatus === undefined
-    const isImageValid = image.src.length > 0 && ((image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE) || image.height === 0 || image.width === 0)
+    const isImageValid = url.length > 0 && ((image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE) || image.height === 0 || image.width === 0)
 
     if (imageIsNotAnalyzed && isImageValid) {
       image.dataset.nsfwFilterStatus = 'processing'
-      this._analyzeImage(image)
+      this._analyzeElement(image, url)
     }
   }
 
-  public checkStyleMutation (image: HTMLImageElement): void {
-    const isStyleOutdated = this.isStyleOutdated(image)
+  public analyzeElement (element: HTMLElement, srcAttribute: boolean = false): void {
+    const url = this.getBackgroundImageUrl(element)
+    if (url.length === 0) return
+
+    const elementIsNotAnalyzed = srcAttribute || element.dataset.nsfwFilterStatus === undefined
+    if (!elementIsNotAnalyzed) return
+
+    element.dataset.nsfwFilterStatus = 'processing'
+    this._analyzeElement(element, url)
+  }
+
+  public checkStyleMutation (element: HTMLElement): void {
+    const isStyleOutdated = this.isStyleOutdated(element)
 
     if (!isStyleOutdated) return
 
-    this.applyFilter(image, image.src)
+    const url = this.getBackgroundImageUrl(element)
+    if (url.length === 0) return
+
+    this.applyFilter(element, url)
   }
 
-  private isStyleOutdated (image: HTMLImageElement): boolean {
-    const isImageNSFW = image.dataset.nsfwFilterStatus === 'nsfw'
+  private isStyleOutdated (element: HTMLElement): boolean {
+    const isNSFW = element.dataset.nsfwFilterStatus === 'nsfw'
 
-    if (!isImageNSFW) return false
+    if (!isNSFW) return false
 
-    const isVisibilityHiddenOutdated = this.settings.filterEffect === 'hide' && image.getAttribute('style')?.includes('visibility: hidden') === false
-    const isBlurOutdated = this.settings.filterEffect === 'blur' && image.getAttribute('style')?.includes('filter: blur') === false
-    const isGrayscaleOutdated = this.settings.filterEffect === 'grayscale' && image.getAttribute('style')?.includes('filter: grayscale') === false
+    const style = element.getAttribute('style') ?? ''
+    const isVisibilityHiddenOutdated = this.settings.filterEffect === 'hide' && style.includes('visibility: hidden') === false
+    const isBlurOutdated = this.settings.filterEffect === 'blur' && style.includes('filter: blur') === false
+    const isGrayscaleOutdated = this.settings.filterEffect === 'grayscale' && style.includes('filter: grayscale') === false
 
     return isVisibilityHiddenOutdated || isBlurOutdated || isGrayscaleOutdated
   }
 
-  private _analyzeImage (image: HTMLImageElement): void {
-    // apply an initial blur so users never see an unfiltered teaser
-    this.applyInitialBlur(image)
+  private _analyzeElement (element: HTMLElement, url: string): void {
+    this.applyInitialBlur(element)
 
-    const request = new PredictionRequest(image.src)
+    const request = new PredictionRequest(url)
     this.requestToAnalyzeImage(request)
-      .then(({ result, url }) => {
+      .then(({ result }) => {
         if (result) {
-          // mark as nsfw before applying filter so reveal logic knows to keep the filter
-          image.dataset.nsfwFilterStatus = 'nsfw'
-          this.applyFilter(image, url)
-
+          element.dataset.nsfwFilterStatus = 'nsfw'
+          this.applyFilter(element, url)
           this.blockedItems++
         } else {
-          this.showImage(image, url)
+          this.showElement(element, url)
         }
-      }).catch(({ url }) => {
-        this.showImage(image, url)
+      }).catch(() => {
+        this.showElement(element, url)
       })
   }
 
-  private applyInitialBlur (image: HTMLImageElement): void {
-    image.style.filter = 'blur(25px)'
-    if (image.parentNode?.nodeName === 'BODY') image.hidden = false
-
-    image.style.visibility = 'visible'
+  private getImageUrl (image: HTMLImageElement): string {
+    return image.src || image.getAttribute('data-src') || image.dataset.src || ''
   }
 
-  private applyFilter (image: HTMLImageElement, url: string): void {
+  private getBackgroundImageUrl (element: HTMLElement): string {
+    if (element instanceof HTMLImageElement) {
+      return this.getImageUrl(element)
+    }
+
+    const dataSrc = element.getAttribute('data-src') || element.dataset.src
+    if (dataSrc) return dataSrc
+
+    const backgroundImage = element.style.backgroundImage || window.getComputedStyle(element).backgroundImage
+    return this.extractBackgroundImageUrl(backgroundImage)
+  }
+
+  private extractBackgroundImageUrl (backgroundImage: string): string {
+    const match = backgroundImage.match(/url\((?:'|")?(.*?)(?:'|")?\)/)
+    return match ? match[1] : ''
+  }
+
+  private applyInitialBlur (element: HTMLElement): void {
+    element.style.setProperty('filter', 'blur(25px)', 'important')
+    element.style.visibility = 'visible'
+
+    if (element instanceof HTMLImageElement && element.parentNode?.nodeName === 'BODY') element.hidden = false
+  }
+
+  private applyFilter (element: HTMLElement, url: string): void {
     if (this.settings.filterEffect === 'blur') {
-      image.style.filter = 'blur(25px)'
-      this.showImage(image, url)
+      element.style.setProperty('filter', 'blur(25px)', 'important')
+      this.showElement(element, url)
       return
     }
 
     if (this.settings.filterEffect === 'grayscale') {
-      image.style.filter = 'grayscale(1)'
-      this.showImage(image, url)
+      element.style.setProperty('filter', 'grayscale(1)', 'important')
+      this.showElement(element, url)
       return
     }
 
-    this.hideImage(image)
+    this.hideElement(element)
   }
 
-  private hideImage (image: HTMLImageElement): void {
-    if (image.parentNode?.nodeName === 'BODY') image.hidden = true
+  private hideElement (element: HTMLElement): void {
+    if (element instanceof HTMLImageElement && element.parentNode?.nodeName === 'BODY') element.hidden = true
 
-    image.style.visibility = 'hidden'
+    element.style.visibility = 'hidden'
   }
 
-  private showImage (image: HTMLImageElement, url: string): void {
-    if (image.src === url) {
-      if (image.parentNode?.nodeName === 'BODY') image.hidden = false
-      // only remove visual filter when image is confirmed safe
-      if (image.dataset.nsfwFilterStatus !== 'nsfw') {
-        image.style.filter = ''
+  private showElement (element: HTMLElement, url: string): void {
+    const currentUrl = this.getBackgroundImageUrl(element)
+    if (currentUrl === url) {
+      if (element instanceof HTMLImageElement && element.parentNode?.nodeName === 'BODY') element.hidden = false
+
+      if (element.dataset.nsfwFilterStatus !== 'nsfw') {
+        element.style.setProperty('filter', 'none', 'important')
       }
 
-      image.dataset.nsfwFilterStatus = 'sfw'
-      image.style.visibility = 'visible'
+      element.dataset.nsfwFilterStatus = 'sfw'
+      element.style.visibility = 'visible'
     }
   }
 }

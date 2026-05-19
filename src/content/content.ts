@@ -7,14 +7,14 @@ import { DOMWatcher } from './DOMWatcher/DOMWatcher'
 import { ImageFilter } from './Filter/ImageFilter'
 
 const init = (): void => {
-  // Inject a global blur to ensure every image is blurred immediately on filtered pages.
+  // Inject a global blur to ensure every image and inline background-image starts blurred.
   const STYLE_ID = 'nsfw-filter-initial-style'
   let style: HTMLStyleElement | null = document.getElementById(STYLE_ID) as HTMLStyleElement | null
 
   if (!style) {
     style = document.createElement('style')
     style.id = STYLE_ID
-    style.innerHTML = 'img { filter: blur(25px) !important; visibility: visible !important }'
+    style.innerHTML = 'img, [data-src], [style*="background-image"] { filter: blur(25px) !important; visibility: visible !important }'
     document.head?.appendChild(style)
   }
 

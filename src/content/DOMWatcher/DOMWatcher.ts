@@ -31,31 +31,58 @@ export class DOMWatcher implements IDOMWatcher {
     for (let i = 0; i < mutationsList.length; i++) {
       const mutation = mutationsList[i]
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        this.findAndCheckAllImages(mutation.target as Element)
+        this.findAndCheckAllVisualElements(mutation.target as Element)
       } else if (mutation.type === 'attributes') {
         this.checkAttributeMutation(mutation)
       }
     }
   }
 
-  private findAndCheckAllImages (element: Element): void {
+  private findAndCheckAllVisualElements (element: Element): void {
     const images = element.getElementsByTagName('img')
     for (let i = 0; i < images.length; i++) {
       this.imageFilter.analyzeImage(images[i], false)
     }
+
+    const elements = element.querySelectorAll<HTMLElement>('[data-src], [srcset], [style*="background-image"]')
+    for (let i = 0; i < elements.length; i++) {
+      const current = elements[i]
+      if (current.nodeName === 'IMG') continue
+      this.imageFilter.analyzeElement(current, false)
+    }
   }
 
   private checkAttributeMutation (mutation: MutationRecord): void {
-    if ((mutation.target as HTMLImageElement).nodeName === 'IMG') {
-      const isSrcAttribute = mutation.attributeName === 'src' || mutation.attributeName === 'srcset'
-      const isStyleAttribute = mutation.attributeName === 'style'
+    const target = mutation.target as HTMLElement
+    const attrName = mutation.attributeName
+
+    if (target.nodeName === 'IMG') {
+      const isSrcAttribute = attrName === 'src' || attrName === 'srcset' || attrName === 'data-src'
+      const isStyleAttribute = attrName === 'style'
 
       if (isStyleAttribute) {
-        this.imageFilter.checkStyleMutation(mutation.target as HTMLImageElement)
+        this.imageFilter.checkStyleMutation(target as HTMLImageElement)
         return
       }
 
-      this.imageFilter.analyzeImage(mutation.target as HTMLImageElement, isSrcAttribute)
+      if (isSrcAttribute) {
+        this.imageFilter.analyzeImage(target as HTMLImageElement, true)
+      }
+
+      return
+    }
+
+    const isBackgroundAttribute = attrName === 'style' || attrName === 'class' || attrName === 'data-src'
+    if (!isBackgroundAttribute) return
+
+    if (attrName === 'style' || attrName === 'class') {
+      this.imageFilter.checkStyleMutation(target)
+    }
+
+    if (attrName === 'data-src') {
+      this.imageFilter.analyzeElement(target, true)
+    } else {
+      this.imageFilter.analyzeElement(target, false)
     }
   }
 
@@ -65,7 +92,7 @@ export class DOMWatcher implements IDOMWatcher {
       subtree: true,
       childList: true,
       attributes: true,
-      attributeFilter: ['src', 'style', 'srcset']
+      attributeFilter: ['src', 'style', 'srcset', 'data-src', 'class']
     }
   }
 }
