@@ -9,7 +9,7 @@ import {
 
 export type SettingsState = {
   logging: boolean
-  filterEffect: 'hide' | 'blur' | 'grayscale'
+  filterEffect: 'hide' | 'blur'
   trainedModel: 'MobileNet_v2' | 'InceptionV3'
   filterStrictness: number
   websites: string[]

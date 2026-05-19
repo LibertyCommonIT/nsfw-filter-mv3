@@ -3,7 +3,7 @@ import { PredictionRequest } from '../../utils/messages'
 import { Filter } from './Filter'
 
 type imageFilterSettingsType = {
-  filterEffect: 'blur' | 'hide' | 'grayscale'
+  filterEffect: 'blur' | 'hide'
 }
 
 export type IImageFilter = {
@@ -69,9 +69,8 @@ export class ImageFilter extends Filter implements IImageFilter {
     const style = element.getAttribute('style') ?? ''
     const isVisibilityHiddenOutdated = this.settings.filterEffect === 'hide' && style.includes('visibility: hidden') === false
     const isBlurOutdated = this.settings.filterEffect === 'blur' && style.includes('filter: blur') === false
-    const isGrayscaleOutdated = this.settings.filterEffect === 'grayscale' && style.includes('filter: grayscale') === false
 
-    return isVisibilityHiddenOutdated || isBlurOutdated || isGrayscaleOutdated
+    return isVisibilityHiddenOutdated || isBlurOutdated
   }
 
   private _analyzeElement (element: HTMLElement, url: string): void {
@@ -126,13 +125,6 @@ export class ImageFilter extends Filter implements IImageFilter {
       this.showElement(element, url)
       return
     }
-
-    if (this.settings.filterEffect === 'grayscale') {
-      element.style.setProperty('filter', 'grayscale(1)', 'important')
-      this.showElement(element, url)
-      return
-    }
-
     this.hideElement(element)
   }
 
