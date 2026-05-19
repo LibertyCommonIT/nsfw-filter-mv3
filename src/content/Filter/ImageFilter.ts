@@ -30,13 +30,11 @@ export class ImageFilter extends Filter implements IImageFilter {
 
   public analyzeImage (image: HTMLImageElement, srcAttribute: boolean = false): void {
     const url = this.getImageUrl(image)
-    const previousUrl = image.dataset.nsfwFilterUrl
-    const imageIsNotAnalyzed = srcAttribute || image.dataset.nsfwFilterStatus === undefined || previousUrl !== url
+    const imageIsNotAnalyzed = srcAttribute || image.dataset.nsfwFilterStatus === undefined
     const isImageValid = url.length > 0 && ((image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE) || image.height === 0 || image.width === 0)
 
     if (imageIsNotAnalyzed && isImageValid) {
       image.dataset.nsfwFilterStatus = 'processing'
-      image.dataset.nsfwFilterUrl = url
       this._analyzeElement(image, url)
     }
   }
@@ -45,12 +43,10 @@ export class ImageFilter extends Filter implements IImageFilter {
     const url = this.getBackgroundImageUrl(element)
     if (url.length === 0) return
 
-    const previousUrl = element.dataset.nsfwFilterUrl
-    const elementIsNotAnalyzed = srcAttribute || element.dataset.nsfwFilterStatus === undefined || previousUrl !== url
+    const elementIsNotAnalyzed = srcAttribute || element.dataset.nsfwFilterStatus === undefined
     if (!elementIsNotAnalyzed) return
 
     element.dataset.nsfwFilterStatus = 'processing'
-    element.dataset.nsfwFilterUrl = url
     this._analyzeElement(element, url)
   }
 
