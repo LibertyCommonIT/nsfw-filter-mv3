@@ -58,6 +58,16 @@ module.exports = {
         }),
     ],
     resolve: {
-        extensions: [".js", ".ts", ".tsx"]
-    }
+        extensions: [".js", ".ts", ".tsx"],
+        mainFields: ["browser", "module", "main"],
+        alias: {
+            nsfwjs$: path.resolve(__dirname, '../node_modules/nsfwjs/dist/esm/index.js')
+        }
+    },
+    ignoreWarnings: [
+        {
+            module: /[\\/]node_modules[\\/]nsfwjs[\\/]/,
+            message: /Critical dependency: the request of a dependency is an expression/
+        }
+    ]
 }

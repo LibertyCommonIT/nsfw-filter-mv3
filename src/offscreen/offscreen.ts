@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 
 import { setBackend, ready, enableProdMode } from '@tensorflow/tfjs'
-import '@tensorflow/tfjs-backend-webgpu'
 import { load as loadModel } from 'nsfwjs'
 
 import { ILogger, Logger } from '../utils/Logger'
@@ -91,8 +90,25 @@ chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
   }
 })
 
+const patchGpuRequestAdapter = (): void => {
+  const gpu = (navigator as any).gpu
+  if (!gpu || typeof gpu.requestAdapter !== 'function') return
+
+  const originalRequestAdapter = gpu.requestAdapter.bind(gpu)
+  gpu.requestAdapter = (descriptor?: GPURequestAdapterOptions) => {
+    if (descriptor && 'powerPreference' in descriptor) {
+      const { powerPreference, ...rest } = descriptor as { powerPreference?: string }
+      return originalRequestAdapter(rest as GPURequestAdapterOptions)
+    }
+    return originalRequestAdapter(descriptor)
+  }
+}
+
 const init = async (): Promise<void> => {
+  patchGpuRequestAdapter()
+
   // WebGPU doesn't use eval so it works within MV3 CSP; fall back to CPU if unavailable
+  await import('@tensorflow/tfjs-backend-webgpu').catch(() => {})
   const gpuAvailable = await setBackend('webgpu').catch(() => false)
   if (!gpuAvailable) await setBackend('cpu')
   await ready()
