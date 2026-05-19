@@ -31,7 +31,11 @@ export class DOMWatcher implements IDOMWatcher {
     for (let i = 0; i < mutationsList.length; i++) {
       const mutation = mutationsList[i]
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        this.findAndCheckAllVisualElements(mutation.target as Element)
+        for (let j = 0; j < mutation.addedNodes.length; j++) {
+          const addedNode = mutation.addedNodes[j]
+          if (addedNode.nodeType !== Node.ELEMENT_NODE) continue
+          this.findAndCheckAllVisualElements(addedNode as Element)
+        }
       } else if (mutation.type === 'attributes') {
         this.checkAttributeMutation(mutation)
       }
@@ -39,9 +43,17 @@ export class DOMWatcher implements IDOMWatcher {
   }
 
   private findAndCheckAllVisualElements (element: Element): void {
-    const images = element.getElementsByTagName('img')
-    for (let i = 0; i < images.length; i++) {
-      this.imageFilter.analyzeImage(images[i], false)
+    if (element.nodeName === 'IMG') {
+      this.imageFilter.analyzeImage(element as HTMLImageElement, false)
+    } else {
+      const images = element.getElementsByTagName('img')
+      for (let i = 0; i < images.length; i++) {
+        this.imageFilter.analyzeImage(images[i], false)
+      }
+    }
+
+    if (this.shouldAnalyzeElementItself(element)) {
+      this.imageFilter.analyzeElement(element as HTMLElement, false)
     }
 
     const elements = element.querySelectorAll<HTMLElement>('[data-src], [srcset], [style*="background-image"]')
@@ -50,6 +62,14 @@ export class DOMWatcher implements IDOMWatcher {
       if (current.nodeName === 'IMG') continue
       this.imageFilter.analyzeElement(current, false)
     }
+  }
+
+  private shouldAnalyzeElementItself (element: Element): boolean {
+    if (element.nodeName === 'IMG') return false
+    if (element.hasAttribute('data-src') || element.hasAttribute('srcset')) return true
+
+    const style = element.getAttribute('style') || ''
+    return style.includes('background-image')
   }
 
   private checkAttributeMutation (mutation: MutationRecord): void {
