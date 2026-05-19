@@ -44,7 +44,7 @@ export class Model implements IModel {
         Model.handleFilterStrictness({
           value: filterStrictness,
           maxValue: 100,
-          minValue: className === 'Porn' ? 40 : 60
+          minValue: className === 'Porn' ? 30 : 50
         })
       )
     }
@@ -55,39 +55,50 @@ export class Model implements IModel {
         Model.handleFilterStrictness({
           value: filterStrictness,
           maxValue: 50,
-          minValue: className === 'Porn' ? 15 : 25
+          minValue: className === 'Porn' ? 10 : 20
         })
       )
     }
   }
 
   public async predictImage (image: HTMLImageElement, url: string): Promise<boolean> {
+    const start = this.logger.status ? new Date().getTime() : 0
+    const prediction = await this.model.classify(image, 3)
+    const { result, className, probability } = this.handlePrediction(prediction)
+
     if (this.logger.status) {
-      const start = new Date().getTime()
-
-      const prediction = await this.model.classify(image, 2)
-      const { result, className, probability } = this.handlePrediction(prediction)
-
       const end = new Date().getTime()
       this.logger.log(`IMG prediction (${end - start} ms) is ${className} ${probability} for ${url}`)
-
-      return result
-    } else {
-      const prediction = await this.model.classify(image, 2)
-      return this.handlePrediction(prediction).result
     }
+
+    return result
   }
 
   private handlePrediction (prediction: predictionType[]): { result: boolean, className: string, probability: number } {
-    const [{ className: cn1, probability: pb1 }, { className: cn2, probability: pb2 }] = prediction
+    const [firstPrediction, ...restPredictions] = prediction
+    const { className: cn1, probability: pb1 } = firstPrediction
 
-    const result1 = this.FILTER_LIST.has(cn1) && pb1 > (this.firstFilterPercentages.get(cn1) as number)
-    if (result1) return ({ result: result1, className: cn1, probability: pb1 })
+    if (this.isNSFWPrediction(cn1, pb1, true)) {
+      return { result: true, className: cn1, probability: pb1 }
+    }
 
-    const result2 = this.FILTER_LIST.has(cn2) && pb2 > (this.secondFilterPercentages.get(cn2) as number)
-    if (result2) return ({ result: result2, className: cn2, probability: pb2 })
+    for (const { className, probability } of restPredictions) {
+      if (this.isNSFWPrediction(className, probability, false)) {
+        return { result: true, className, probability }
+      }
+    }
 
-    return ({ result: false, className: cn1, probability: pb1 })
+    return { result: false, className: cn1, probability: pb1 }
+  }
+
+  private isNSFWPrediction (className: string, probability: number, isTopPrediction: boolean): boolean {
+    if (!this.FILTER_LIST.has(className)) return false
+
+    const threshold = isTopPrediction
+      ? this.firstFilterPercentages.get(className)
+      : this.secondFilterPercentages.get(className)
+
+    return threshold !== undefined && probability > threshold
   }
 
   public static handleFilterStrictness ({ value, minValue, maxValue }: {value: number, minValue: number, maxValue: number}): number {
