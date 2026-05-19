@@ -58,22 +58,31 @@ export class ImageFilter extends Filter implements IImageFilter {
   }
 
   private _analyzeImage (image: HTMLImageElement): void {
-    this.hideImage(image)
+    // apply an initial blur so users never see an unfiltered teaser
+    this.applyInitialBlur(image)
 
     const request = new PredictionRequest(image.src)
     this.requestToAnalyzeImage(request)
       .then(({ result, url }) => {
         if (result) {
+          // mark as nsfw before applying filter so reveal logic knows to keep the filter
+          image.dataset.nsfwFilterStatus = 'nsfw'
           this.applyFilter(image, url)
 
           this.blockedItems++
-          image.dataset.nsfwFilterStatus = 'nsfw'
         } else {
           this.showImage(image, url)
         }
       }).catch(({ url }) => {
         this.showImage(image, url)
       })
+  }
+
+  private applyInitialBlur (image: HTMLImageElement): void {
+    image.style.filter = 'blur(25px)'
+    if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+
+    image.style.visibility = 'visible'
   }
 
   private applyFilter (image: HTMLImageElement, url: string): void {
@@ -101,6 +110,10 @@ export class ImageFilter extends Filter implements IImageFilter {
   private showImage (image: HTMLImageElement, url: string): void {
     if (image.src === url) {
       if (image.parentNode?.nodeName === 'BODY') image.hidden = false
+      // only remove visual filter when image is confirmed safe
+      if (image.dataset.nsfwFilterStatus !== 'nsfw') {
+        image.style.filter = ''
+      }
 
       image.dataset.nsfwFilterStatus = 'sfw'
       image.style.visibility = 'visible'
