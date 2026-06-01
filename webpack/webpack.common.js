@@ -47,6 +47,7 @@ module.exports = {
             patterns: [
                 { from: `${PATHS.src}/popup/popup.html`, to: PATHS.dist },
                 { from: `${PATHS.src}/offscreen/offscreen.html`, to: PATHS.dist },
+                { from: './config.json', to: PATHS.dist },
             ],
         }),
         new AntdDayjsWebpackPlugin(),

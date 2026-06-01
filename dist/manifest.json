@@ -8,7 +8,8 @@
   "permissions": [
     "storage",
     "offscreen",
-    "tabs"
+    "tabs",
+    "management"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -45,7 +46,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["models/*", "models/inceptionv3/*", "images/*"],
+      "resources": ["models/*", "models/inceptionv3/*", "images/*", "config.json"],
       "matches": ["<all_urls>"]
     }
   ]
