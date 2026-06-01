@@ -1,7 +1,7 @@
 {
-  "name": "Liberty Filter",
+  "name": "The Dress Code Enforcer",
   "version": "1.0.0",
-  "description": "Free, open source, and privacy-focused browser extension to block \"not safe for work\" content.",
+  "description": "Free, open source, and privacy-focused browser extension to aggressively block \"not safe for school\" content.",
   "author": "Liberty IT Team & Tim Wildig",
   "homepage_url": "https://nsfw-filter.com",
   "manifest_version": 3,
