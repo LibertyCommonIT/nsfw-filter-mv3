@@ -107,7 +107,10 @@ export const Production: React.FC = () => {
           placeholder="Enter disable code"
           type="password"
           value={disableCode}
-          onChange={event => setDisableMessage('Extension Disabled') || setDisableCode(event.target.value)}
+          onChange={event => {
+            setDisableMessage('')
+            setDisableCode(event.target.value)
+          }}
           disabled={isDisabling}
         />
         <Button 
