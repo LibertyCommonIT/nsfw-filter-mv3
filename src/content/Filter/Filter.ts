@@ -4,10 +4,12 @@ type IFilter = {
   getBlockAmount: () => number
 }
 
-type FilterRequestQueueValue = Array<Array<{
+type FilterQueueRequest = {
   resolve: (value: PredictionResponse) => void
   reject: (error: PredictionRequest) => void
-}>>
+}
+
+type FilterRequestQueueValue = FilterQueueRequest[][]
 
 export class Filter implements IFilter {
   protected blockedItems: number
@@ -25,37 +27,29 @@ export class Filter implements IFilter {
   protected async requestToAnalyzeImage (request: PredictionRequest): Promise<PredictionResponse> {
     return await new Promise((resolve, reject) => {
       const queueName = request.url
+      const queue = this.requestQueue.get(queueName)
 
-      try {
-        if (this.requestQueue.has(queueName)) {
-          this.requestQueue.get(queueName)?.push([{ resolve, reject }])
-        } else {
-          this.requestQueue.set(queueName, [[{ resolve, reject }]])
-
-          this._requestToAnalyzeImage(request, resolve)
-        }
-      } catch {
-        if (this.requestQueue.has(queueName)) {
-          for (const [{ reject }] of this.requestQueue.get(queueName) as FilterRequestQueueValue) {
-            reject(request)
-          }
-        } else {
-          reject(request)
-        }
-
-        this.requestQueue.delete(queueName)
+      if (queue) {
+        queue.push([{ resolve, reject }])
+        return
       }
+
+      this.requestQueue.set(queueName, [[{ resolve, reject }]])
+      this._requestToAnalyzeImage(request, resolve)
     })
   }
 
   private _requestToAnalyzeImage (request: PredictionRequest, resolve: (value: PredictionResponse) => void): void {
     chrome.runtime.sendMessage(request, (response: PredictionResponse) => {
+      const queue = this.requestQueue.get(request.url)
+      if (!queue) return
+
       if (chrome.runtime.lastError !== null && chrome.runtime.lastError !== undefined) {
         this._handleBackgroundErrors(request, resolve, chrome.runtime.lastError.message)
         return
       }
 
-      for (const [{ resolve }] of this.requestQueue.get(request.url) as FilterRequestQueueValue) {
+      for (const [{ resolve }] of queue) {
         resolve(response)
       }
 
@@ -71,8 +65,9 @@ export class Filter implements IFilter {
       resolve(new PredictionResponse(false, request.url, 'Background worker doesn\'t working'))
       console.warn(`[NSFW-Filter] Background worker is down, marked as visible ${request.url}`)
       this.requestQueue.delete(request.url)
-    } else {
-      request.reconectTimer = window.setTimeout(() => this._requestToAnalyzeImage(request, resolve), 500)
+      return
     }
+
+    request.reconectTimer = window.setTimeout(() => this._requestToAnalyzeImage(request, resolve), 500)
   }
 }

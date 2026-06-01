@@ -2,8 +2,14 @@ import { PredictionRequest } from '../../utils/messages'
 
 import { Filter } from './Filter'
 
+const FILTER_EFFECT_BLUR = 'blur' as const
+const FILTER_EFFECT_HIDE = 'hide' as const
+const STATUS_PROCESSING = 'processing'
+const STATUS_NSFW = 'nsfw'
+const STATUS_SFW = 'sfw'
+
 type imageFilterSettingsType = {
-  filterEffect: 'blur' | 'hide'
+  filterEffect: typeof FILTER_EFFECT_BLUR | typeof FILTER_EFFECT_HIDE
 }
 
 export type IImageFilter = {
@@ -34,7 +40,7 @@ export class ImageFilter extends Filter implements IImageFilter {
     const isImageValid = url.length > 0 && ((image.width > this.MIN_IMAGE_SIZE && image.height > this.MIN_IMAGE_SIZE) || image.height === 0 || image.width === 0)
 
     if (imageIsNotAnalyzed && isImageValid) {
-      image.dataset.nsfwFilterStatus = 'processing'
+      image.dataset.nsfwFilterStatus = STATUS_PROCESSING
       this._analyzeElement(image, url)
     }
   }
@@ -46,7 +52,7 @@ export class ImageFilter extends Filter implements IImageFilter {
     const elementIsNotAnalyzed = srcAttribute || element.dataset.nsfwFilterStatus === undefined
     if (!elementIsNotAnalyzed) return
 
-    element.dataset.nsfwFilterStatus = 'processing'
+    element.dataset.nsfwFilterStatus = STATUS_PROCESSING
     this._analyzeElement(element, url)
   }
 
@@ -62,13 +68,11 @@ export class ImageFilter extends Filter implements IImageFilter {
   }
 
   private isStyleOutdated (element: HTMLElement): boolean {
-    const isNSFW = element.dataset.nsfwFilterStatus === 'nsfw'
-
-    if (!isNSFW) return false
+    if (element.dataset.nsfwFilterStatus !== STATUS_NSFW) return false
 
     const style = element.getAttribute('style') ?? ''
-    const isVisibilityHiddenOutdated = this.settings.filterEffect === 'hide' && style.includes('visibility: hidden') === false
-    const isBlurOutdated = this.settings.filterEffect === 'blur' && style.includes('filter: blur') === false
+    const isVisibilityHiddenOutdated = this.settings.filterEffect === FILTER_EFFECT_HIDE && !style.includes('visibility: hidden')
+    const isBlurOutdated = this.settings.filterEffect === FILTER_EFFECT_BLUR && !style.includes('filter: blur')
 
     return isVisibilityHiddenOutdated || isBlurOutdated
   }
@@ -96,15 +100,12 @@ export class ImageFilter extends Filter implements IImageFilter {
   }
 
   private getBackgroundImageUrl (element: HTMLElement): string {
-    if (element instanceof HTMLImageElement) {
-      return this.getImageUrl(element)
-    }
+    if (element instanceof HTMLImageElement) return this.getImageUrl(element)
 
     const dataSrc = element.getAttribute('data-src') || element.dataset.src
     if (dataSrc) return dataSrc
 
-    const backgroundImage = element.style.backgroundImage || window.getComputedStyle(element).backgroundImage
-    return this.extractBackgroundImageUrl(backgroundImage)
+    return this.extractBackgroundImageUrl(element.style.backgroundImage || window.getComputedStyle(element).backgroundImage)
   }
 
   private extractBackgroundImageUrl (backgroundImage: string): string {
@@ -120,12 +121,17 @@ export class ImageFilter extends Filter implements IImageFilter {
   }
 
   private applyFilter (element: HTMLElement, url: string): void {
-    if (this.settings.filterEffect === 'blur') {
-      element.style.setProperty('filter', 'blur(25px)', 'important')
-      this.showElement(element, url)
+    if (this.settings.filterEffect === FILTER_EFFECT_BLUR) {
+      this.applyBlur(element, url)
       return
     }
+
     this.hideElement(element)
+  }
+
+  private applyBlur (element: HTMLElement, url: string): void {
+    element.style.setProperty('filter', 'blur(25px)', 'important')
+    this.showElement(element, url)
   }
 
   private hideElement (element: HTMLElement): void {
@@ -135,16 +141,14 @@ export class ImageFilter extends Filter implements IImageFilter {
   }
 
   private showElement (element: HTMLElement, url: string): void {
-    const currentUrl = this.getBackgroundImageUrl(element)
-    if (currentUrl === url) {
-      if (element instanceof HTMLImageElement && element.parentNode?.nodeName === 'BODY') element.hidden = false
+    if (this.getBackgroundImageUrl(element) !== url) return
 
-      if (element.dataset.nsfwFilterStatus !== 'nsfw') {
-        element.style.setProperty('filter', 'none', 'important')
-      }
-
-      element.dataset.nsfwFilterStatus = 'sfw'
-      element.style.visibility = 'visible'
+    if (element instanceof HTMLImageElement && element.parentNode?.nodeName === 'BODY') element.hidden = false
+    if (element.dataset.nsfwFilterStatus !== STATUS_NSFW) {
+      element.style.setProperty('filter', 'none', 'important')
     }
+
+    element.dataset.nsfwFilterStatus = STATUS_SFW
+    element.style.visibility = 'visible'
   }
 }

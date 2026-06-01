@@ -6,6 +6,7 @@ import {
   setTrainedModel,
   setFilterEffect
 } from '../../redux/actions/settings/index'
+import { disableExtension } from '../../utils/disableExtension'
 import { RootState } from '../../redux/reducers'
 import { SettingsState } from '../../redux/reducers/settings'
 import { StatisticsState } from '../../redux/reducers/statistics'
@@ -14,39 +15,23 @@ import { Container, Stats, DropdownRow, TextBox } from './styles'
 
 const { Option } = Select
 
-const hashPassword = async (password: string): Promise<string> => {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-  return hashHex
+type DisableState = {
+  code: string
+  message: string
+  loading: boolean
 }
 
-const disableExtension = async (disableCode: string): Promise<boolean> => {
-  try {
-    const response = await fetch(chrome.runtime.getURL('config.json'))
-    const config = await response.json()
-    const hashedCode = await hashPassword(disableCode)
-    
-    if (hashedCode === config.disablePassword) {
-      const extensionId = chrome.runtime.id
-      await chrome.management.setEnabled(extensionId, false)
-      return true
-    }
-    return false
-  } catch (error) {
-    console.error('Error disabling extension:', error)
-    return false
-  }
+const initialDisableState: DisableState = {
+  code: '',
+  message: '',
+  loading: false
 }
 
 export const Production: React.FC = () => {
   const dispatch = useDispatch()
-  const [disableCode, setDisableCode] = useState('')
-  const [disableMessage, setDisableMessage] = useState('')
-  const [isDisabling, setIsDisabling] = useState(false)
-  
+  const [disableState, setDisableState] = useState(initialDisableState)
+  const { code, message, loading } = disableState
+
   const {
     trainedModel,
     filterEffect
@@ -54,24 +39,21 @@ export const Production: React.FC = () => {
   const { totalBlocked } = useSelector<RootState>((state) => state.statistics) as StatisticsState
 
   const handleDisableExtension = async (): Promise<void> => {
-    if (!disableCode.trim()) {
-      setDisableMessage('Please enter a code')
+    if (!code.trim()) {
+      setDisableState(prev => ({ ...prev, message: 'Please enter a code' }))
       return
     }
 
-    setIsDisabling(true)
-    const success = await disableExtension(disableCode)
-    
+    setDisableState(prev => ({ ...prev, loading: true, message: '' }))
+    const success = await disableExtension(code)
+
     if (success) {
-      setDisableMessage('Extension disabled successfully!')
-      setTimeout(() => {
-        window.location.reload()
-      }, 1000)
-    } else {
-      setDisableMessage('Invalid code')
-      setDisableCode('')
-      setIsDisabling(false)
+      setDisableState(prev => ({ ...prev, message: 'Extension disabled successfully!' }))
+      setTimeout(() => window.location.reload(), 1000)
+      return
     }
+
+    setDisableState({ code: '', message: 'Invalid code', loading: false })
   }
 
   return (
@@ -82,7 +64,7 @@ export const Production: React.FC = () => {
       <DropdownRow>
         <span>Filter effect</span>
         <Select
-          defaultValue={filterEffect}
+          value={filterEffect}
           style={{ width: 140 }}
           onChange={value => dispatch(setFilterEffect(value))}
         >
@@ -93,7 +75,7 @@ export const Production: React.FC = () => {
       <DropdownRow>
         <span>Trained model</span>
         <Select
-          defaultValue={trainedModel}
+          value={trainedModel}
           style={{ width: 140 }}
           onChange={value => dispatch(setTrainedModel(value))}
         >
@@ -106,23 +88,21 @@ export const Production: React.FC = () => {
         <Input
           placeholder="Enter disable code"
           type="password"
-          value={disableCode}
-          onChange={event => {
-            setDisableMessage('')
-            setDisableCode(event.target.value)
-          }}
-          disabled={isDisabling}
+          value={code}
+          onChange={event => setDisableState(prev => ({ ...prev, code: event.target.value, message: '' }))}
+          disabled={loading}
         />
-        <Button 
-          onClick={handleDisableExtension} 
-          loading={isDisabling}
-          style={{ marginTop: '8px' }}
+        <Button
+          type="primary"
+          onClick={handleDisableExtension}
+          loading={loading}
+          style={{ marginTop: 8 }}
         >
           Disable
         </Button>
-        {disableMessage && (
-          <div style={{ marginTop: '8px', color: disableMessage === 'Invalid code' ? 'red' : 'green' }}>
-            {disableMessage}
+        {message && (
+          <div style={{ marginTop: '8px', color: message === 'Invalid code' ? 'red' : 'green' }}>
+            {message}
           </div>
         )}
       </TextBox>
