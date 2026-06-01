@@ -23,13 +23,7 @@ const init = (): void => {
 
   createChromeStore({ createStore })(rootReducer)
     .then(store => {
-      const { filterEffect, websites } = store.getState().settings
-      if (websites.includes(window.location.hostname)) {
-        // Remove the global blur on excluded sites.
-        style?.parentNode?.removeChild(style)
-        return
-      }
-
+      const { filterEffect } = store.getState().settings
       imageFilter.setSettings({ filterEffect })
       domWatcher.watch()
     })

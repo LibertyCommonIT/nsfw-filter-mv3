@@ -4,8 +4,7 @@ import { useSelector, useDispatch } from 'react-redux'
 
 import {
   setTrainedModel,
-  setFilterEffect,
-  setWebsiteList
+  setFilterEffect
 } from '../../redux/actions/settings/index'
 import { RootState } from '../../redux/reducers'
 import { SettingsState } from '../../redux/reducers/settings'
@@ -18,8 +17,7 @@ export const Production: React.FC = () => {
   const dispatch = useDispatch()
   const {
     trainedModel,
-    filterEffect,
-    websites
+    filterEffect
   } = useSelector<RootState>((state) => state.settings) as SettingsState
   const { totalBlocked } = useSelector<RootState>((state) => state.statistics) as StatisticsState
 
@@ -50,19 +48,6 @@ export const Production: React.FC = () => {
           <Option value="InceptionV3">InceptionV3</Option>
         </Select>
       </DropdownRow>
-      <div>Whitelisted websites</div>
-      <TextBox>
-        <Input
-          placeholder="www.x.com, www.facebook.com"
-          defaultValue={websites.join(', ')}
-          onChange={event => {
-            // Handle the change event and update the whitelist
-            const websites = event.target.value.split(/\s*,\s*/)
-            dispatch(setWebsiteList(websites))
-            // Update the whitelist/blacklist using the websites array
-          }}
-        />
-      </TextBox>
     </Container>)
   )
 }
