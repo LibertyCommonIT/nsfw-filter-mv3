@@ -7,7 +7,8 @@ const { PurgeCSSPlugin } = require('purgecss-webpack-plugin')
 
 const PATHS = {
     src: path.join(__dirname, '../src'),
-    dist: path.join(__dirname, '../dist/src')
+    dist: path.join(__dirname, '../dist/src'),
+    distRoot: path.join(__dirname, '../dist')
 }
 
 module.exports = {
@@ -47,7 +48,7 @@ module.exports = {
             patterns: [
                 { from: `${PATHS.src}/popup/popup.html`, to: PATHS.dist },
                 { from: `${PATHS.src}/offscreen/offscreen.html`, to: PATHS.dist },
-                { from: path.join(__dirname, '../config.json'), to: PATHS.dist },
+                { from: path.join(__dirname, '../config.json'), to: PATHS.distRoot },
             ],
         }),
         new AntdDayjsWebpackPlugin(),
