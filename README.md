@@ -6,8 +6,6 @@ Built using TypeScript, TensorFlow.js, and [NSFWJS](https://github.com/infiniter
 
 [Download the latest build from this repository](https://github.com/Timbological/nsfw-filter-mv3)
 
-![Demo of using The Dresscode Enforcer](demo/images/demo.gif)
-
 # Table of contents
 
 - [The Dresscode Enforcer](#the-dresscode-enforcer)
@@ -23,8 +21,6 @@ You can install the extension from the [source](#development) or build the lates
 When you load web pages, The Dresscode Enforcer will first hide all images and only show those classified as safe.
 
 To customize the extension, click the icon in your extensions tab.
-
-![The Dresscode Enforcer popup](demo/images/popup-window.png)
 
 # Development
 
@@ -59,11 +55,9 @@ Enable Developer Mode by clicking the toggle switch next to Developer mode.
 
 Click the "Load Unpacked" button and select the extension directory(```.../dist```).
 
-![Load extension to Chrome in developer mode](./demo/images/install-instructions.png)
-
 # Contribute
 
-Please check the [**Contributing Guidelines**](https://github.com/navendu-pottekkat/nsfw-filter/blob/master/.github/markdown/CONTRIBUTING.md) before contributing.
+This is a private fork. Please don't contribute. However, we will give credit to the people who built the open source tool before us.
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
