@@ -1,6 +1,6 @@
 {
   "name": "The Dress Code Enforcer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Free, open source, and privacy-focused browser extension to aggressively block \"not safe for school\" content.",
   "author": "Liberty IT Team & Tim Wildig",
   "manifest_version": 3,
