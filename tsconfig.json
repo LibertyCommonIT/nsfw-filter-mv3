@@ -1,12 +1,15 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "target": "ES5",
+    "target": "ES2022",
     "module": "CommonJS",
     "lib": ["DOM", "ESNext"],
     "sourceMap": false,
-    "baseUrl": "src",
+    "rootDir": "./src",
     "outDir": "./dist/src",
+    "paths": {
+      "popup/*": ["./src/popup/*"]
+    },
     "strict": true,
     "strictNullChecks": true,
     "alwaysStrict": true,
@@ -21,8 +24,7 @@
     "allowJs": false,
     "checkJs": false,
     "jsx": "react",
-    "esModuleInterop": true,
-    "downlevelIteration": true
+    "esModuleInterop": true
   },
   "include": ["src/"],
   "exclude": ["node_modules/", "dist/", "test/"]
