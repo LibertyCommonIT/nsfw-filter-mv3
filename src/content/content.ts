@@ -15,7 +15,14 @@ const init = (): void => {
     style = document.createElement('style')
     style.id = STYLE_ID
     style.innerHTML = 'img, [data-src], [style*="background-image"] { filter: blur(25px) !important; visibility: visible !important }'
-    document.head?.appendChild(style)
+
+    if (document.documentElement) {
+      document.documentElement.appendChild(style)
+    } else {
+      document.addEventListener('DOMContentLoaded', () => {
+        if (style && !style.isConnected) document.documentElement?.appendChild(style)
+      }, { once: true })
+    }
   }
 
   const imageFilter = new ImageFilter()
