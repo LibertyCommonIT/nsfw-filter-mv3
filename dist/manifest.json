@@ -1,7 +1,7 @@
 {
   "name": "The Dress Code Enforcer",
   "version": "1.0.1",
-  "description": "Free, open source, and privacy-focused browser extension to aggressively block \"not safe for school\" content.",
+  "description": "Free, open source, and privacy-focused browser extension that filters explicit imagery.",
   "author": "Liberty IT Team & Tim Wildig",
   "manifest_version": 3,
   "permissions": [
@@ -22,9 +22,17 @@
         "http://*/*",
         "https://*/*"
       ],
-      "js": ["src/content.js"],
+      "js": [
+        "src/content.js"
+      ],
       "all_frames": true,
-      "run_at": "document_start"
+      "run_at": "document_start",
+      "exclude_matches": [
+        "http://lexiacore5.com/*",
+        "http://*.lexiacore5.com/*",
+        "https://lexiacore5.com/*",
+        "https://*.lexiacore5.com/*"
+      ]
     }
   ],
   "action": {
@@ -45,8 +53,15 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["models/*", "models/inceptionv3/*", "images/*", "config.json"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "models/*",
+        "models/inceptionv3/*",
+        "images/*",
+        "config.json"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ]
 }

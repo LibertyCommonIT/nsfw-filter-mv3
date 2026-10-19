@@ -11,6 +11,17 @@ const PATHS = {
     distRoot: path.join(__dirname, '../dist')
 }
 
+const EXCLUDED_SITES = require('./excluded-sites.json')
+const EXCLUDED_SITE_MATCHES = [...new Set(EXCLUDED_SITES.flatMap((site) => {
+    const hostname = site.trim().toLowerCase().replace(/^\*\./, '').replace(/\.$/, '')
+    if (hostname.length === 0) return []
+
+    return ['http', 'https'].flatMap((scheme) => [
+        `${scheme}://${hostname}/*`,
+        `${scheme}://*.${hostname}/*`
+    ])
+}))]
+
 module.exports = {
     entry: {
         content: `${PATHS.src}/content/content.ts`,
@@ -48,7 +59,26 @@ module.exports = {
             patterns: [
                 { from: `${PATHS.src}/popup/popup.html`, to: PATHS.dist },
                 { from: `${PATHS.src}/offscreen/offscreen.html`, to: PATHS.dist },
-                { from: path.join(__dirname, '../config.json'), to: PATHS.distRoot },
+                {
+                    from: path.join(__dirname, '../config.json'),
+                    to: PATHS.distRoot,
+                    noErrorOnMissing: true
+                },
+                {
+                    from: path.join(__dirname, 'manifest.json'),
+                    to: PATHS.distRoot,
+                    transform: (content) => {
+                        const manifest = JSON.parse(content.toString())
+                        manifest.content_scripts = manifest.content_scripts.map((contentScript) => ({
+                            ...contentScript,
+                            exclude_matches: [...new Set([
+                                ...(contentScript.exclude_matches || []),
+                                ...EXCLUDED_SITE_MATCHES
+                            ])]
+                        }))
+                        return JSON.stringify(manifest, null, 2)
+                    }
+                },
             ],
         }),
         new AntdDayjsWebpackPlugin(),
