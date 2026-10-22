@@ -37,6 +37,8 @@ export NODE_OPTIONS=--openssl-legacy-provider
 npm run build
 ```
 
+To exclude a site from image filtering at build time, add its hostname to `webpack/excluded-sites.json` (for example, `example.com`). The exclusion applies to that hostname and all its subdomains. Rebuild the extension for the change to take effect; the generated `dist/manifest.json` contains the exclusions.
+
 To run the tests:
 
 ```sh
