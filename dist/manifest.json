@@ -1,6 +1,6 @@
 {
   "name": "The Dress Code Enforcer",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Free, open source, and privacy-focused browser extension that filters explicit imagery.",
   "author": "Liberty IT Team & Tim Wildig",
   "manifest_version": 3,
