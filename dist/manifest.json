@@ -31,7 +31,19 @@
         "http://lexiacore5.com/*",
         "http://*.lexiacore5.com/*",
         "https://lexiacore5.com/*",
-        "https://*.lexiacore5.com/*"
+        "https://*.lexiacore5.com/*",
+        "http://liberty-common.edclub.com/*",
+        "http://*.liberty-common.edclub.com/*",
+        "https://liberty-common.edclub.com/*",
+        "https://*.liberty-common.edclub.com/*",
+        "http://renaissance-go.com/*",
+        "http://*.renaissance-go.com/*",
+        "https://renaissance-go.com/*",
+        "https://*.renaissance-go.com/*",
+        "http://mobymax.com/*",
+        "http://*.mobymax.com/*",
+        "https://mobymax.com/*",
+        "https://*.mobymax.com/*"
       ]
     }
   ],
